@@ -2,13 +2,15 @@
   "name": "todo-api",
   "version": "1.0.0",
   "description": "",
-  "main": "app.js",
+  "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Serhii Koval",
   "license": "ISC",
   "dependencies": {
-    "mongodb": "^2.2.33"
+    "bluebird": "^3.5.1",
+    "mongodb": "^2.2.33",
+    "mongoose": "^4.13.4"
   }
 }
