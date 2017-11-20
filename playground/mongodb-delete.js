@@ -10,8 +10,8 @@ MongoClient.connect('mongodb://localhost:27017/Todo_app', (err, db) => {
     db.collection('Todos').deleteMany({title: 'Buy books'}).then((result) => {
         console.log(result);
     }).catch((err) => {
-         console.log(err));
-    }
+         console.log(err);
+    });
 
     //deleteOne
     db.collection('Todos').deleteOne({title: 'First to do'}).then((result) => {
@@ -25,7 +25,7 @@ MongoClient.connect('mongodb://localhost:27017/Todo_app', (err, db) => {
         console.log(result);
     }).catch((err) => {
         console.log(err);
-    })
+    });
 
     /*Delete user collection objects*/
 
