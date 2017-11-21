@@ -11,7 +11,7 @@ const          port = process.env.PORT || 3000;
 
 app.use(body_parser.json());
 
-app.post('/reminder', (req, res) => {
+app.post('/reminders', (req, res) => {
     const reminder = new Reminder({
         text: req.body.text
     });
@@ -22,6 +22,18 @@ app.post('/reminder', (req, res) => {
         res.status(400).send(err);
     });
 
+});
+
+app.get('/reminders', (req, res) => {
+	Reminder.find().then((reminders) => {
+		if(reminders.length === 0){
+			throw new Error('There are not available reminders')
+		}
+		res.status(200).send({reminders, success: true});
+	}).catch((err) => {
+		console.log(err.message)
+		res.status(400).send({success: false, message: err.message});
+	});
 });
 
 app.listen(port, () => {
