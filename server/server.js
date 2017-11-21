@@ -1,3 +1,4 @@
+const _             = require('lodash');
 const       express = require('express');
 const   body_parser = require('body-parser');
 
@@ -56,6 +57,31 @@ app.delete('/reminders/:id', (req, res) => {
         return res.status(404).send({message: `The id: <${id}> is not valid!`, success: false})
     }
     Reminder.findByIdAndRemove(id).then((reminder) => {
+        if(!reminder){
+            return res.status(404).send({message: `There are not found reminder by id <${id}>`, success: false});
+        }
+        res.status(200).send({reminder, success: true});
+    }).catch((err) => {
+        res.status(400).send({message: err.message, success: false});
+    });
+});
+
+app.patch('/reminders/:id', (req, res) => {
+    let id = req.params && req.params.id;
+    if(id && !ObjectID.isValid(id)) {
+        return res.status(404).send({message: `The id: <${id}> is not valid!`, success: false})
+    }
+
+    let body = _.pick(req.body, ['text', 'completed']);
+
+    if(_.isBoolean(body.completed) && body.completed){
+        body.completed_at = new Date().getTime()
+    }else{
+        body.completed = false;
+        body.completed_at = -1;
+    }
+
+    Reminder.findByIdAndUpdate(id, {$set: body}, {new: true}).then((reminder) => {
         if(!reminder){
             return res.status(404).send({message: `There are not found reminder by id <${id}>`, success: false});
         }
