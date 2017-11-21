@@ -71,7 +71,7 @@ app.patch('/reminders/:id', (req, res) => {
     if(id && !ObjectID.isValid(id)) {
         return res.status(404).send({message: `The id: <${id}> is not valid!`, success: false})
     }
-
+    //Filter props from body based on provided in arr
     let body = _.pick(req.body, ['text', 'completed']);
 
     if(_.isBoolean(body.completed) && body.completed){

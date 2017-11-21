@@ -8,13 +8,19 @@ const   {ObjectID} = require('mongodb');
 const _reminders = [
 	{
 	    _id: new ObjectID(),
-	    text: 'Reminder, R-1'
+	    text: 'Reminder, R-1',
+        completed: true,
+        completed_at: 1511300279632
     }, {
         _id: new ObjectID(),
-        text: 'Reminder, R-2'
+        text: 'Reminder, R-2',
+        completed: true,
+        completed_at: 1511300279632
     }, {
         _id: new ObjectID(),
-        text: 'Reminder, R-3'
+        text: 'Reminder, R-3',
+        completed: true,
+        completed_at: 1511300279632
     },
 ];
 
@@ -159,4 +165,51 @@ describe('DELETE /reminders/:id', () => {
             .end(done);
     });
 
+});
+
+
+describe("PATCH /reminders/:id", () => {
+   it("Should update the reminder", (done) => {
+        let id = _reminders[0]._id.toHexString();
+        let payload = {
+            text: 'New test text',
+            completed: true
+        };
+        request(app)
+            .patch(`/reminders/${id}`)
+            .send(payload)
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.reminder.text).toBe(payload.text);
+                expect(res.body.reminder.completed).toBe(payload.completed);
+                expect(res.body.reminder.completed_at).toBeGreaterThan(-1);
+            }).end((err, res) => {
+                if(err){
+                    return done(err);
+                }
+                done();
+            })
+   });
+
+    it("Should clear completed_at when reminder is not completed", (done) => {
+        let id = _reminders[0]._id.toHexString();
+        let payload = {
+            text: 'New test text 2',
+            completed: false
+        };
+        request(app)
+            .patch(`/reminders/${id}`)
+            .send(payload)
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.reminder.text).toBe(payload.text);
+                expect(res.body.reminder.completed).toBe(payload.completed);
+                expect(res.body.reminder.completed_at).toBe(-1);
+            }).end((err, res) => {
+            if(err){
+                return done(err);
+            }
+            done();
+        })
+    });
 });
