@@ -17,11 +17,9 @@ app.post('/reminder', (req, res) => {
     });
 
     reminder.save().then((doc) => {
-       console.log('Reminder was saved: ', doc);
-       res.status(400).send(doc);
+       res.status(200).send(doc);
     }).catch((err) => {
         res.status(400).send(err);
-        console.log('Error: ', err);
     });
 
 });
@@ -30,5 +28,6 @@ app.listen(port, () => {
    console.log(`Server is up, and listening on port: ${port}`);
 });
 
+module.exports = {app}
 
 
