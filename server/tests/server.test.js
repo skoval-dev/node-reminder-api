@@ -66,3 +66,19 @@ describe('POST /reminders', () => {
 	});
 
 });
+
+describe('GET /reminders', () => {
+	it('Should get all reminders', (done) => {
+		request(app)
+			.get('/reminders')
+			.expect(200)
+			.expect((res) => {
+				expect(res.body.reminders.length).toBe(3)
+			}).end((err, res) => {
+				if(err){
+					return done(err);
+				}
+				done();
+			})
+	});
+});
