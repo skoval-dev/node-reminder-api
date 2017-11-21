@@ -121,3 +121,33 @@ describe('GET /reminders/:id', () => {
             .end(done);
     });
 });
+
+
+describe('DELETE /reminders/:id', () => {
+    it('Should delete reminder by id', (done) => {
+        request(app)
+            .del(`/reminders/${_reminders[0]._id.toHexString()}`)
+            .expect(200)
+            .end((err, res) => {
+                if(err){
+                    return done(err);
+                }
+                done();
+            })
+    });
+
+    it('Should return 404 for non-deleted id', (done) => {
+        let hex_id = new ObjectID().toHexString();
+        request(app)
+            .del(`/reminders/${hex_id}`)
+            .expect(404)
+            .end(done);
+    });
+
+    it('Should return 404 for non-object ids', (done) => {
+        request(app)
+            .del('/reminders/1234')
+            .expect(404)
+            .end(done);
+    });
+});
