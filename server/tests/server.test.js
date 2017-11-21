@@ -4,20 +4,26 @@ const expect = require('expect');
 const {app} = require('./../server');
 const {Reminder} = require('./../models/reminder');
 
+const _reminders = [
+	{text: 'Reminder, R-1'},
+	{text: 'Reminder, R-2'},
+	{text: 'Reminder, R-3'},
+];
+
 beforeEach((done) => {
 	Reminder.remove({}).then(() => {
-		done();
-	}).catch((err) => {
+		return Reminder.insertMany(_reminders);
+	}).then(() => done()).catch((err) => {
 		done(err);
 	});
 });
 
-describe('POST /reminder', () => {
+describe('POST /reminders', () => {
 	it('Should create a new reminder', (done) => {
-		let text = 'Test reminder text';
+		let text = 'Reminder, R-1';
 
 		request(app)
-			.post('/reminder')
+			.post('/reminders')
 			.send({text})
 			.expect(200)
 			.expect((res) => {
@@ -28,7 +34,7 @@ describe('POST /reminder', () => {
 					return done(err);
 				}
 				Reminder.find().then((reminders) => {
-					expect(reminders.length).toBe(1);
+					expect(reminders.length).toBe(_reminders.length + 1);
 					expect(reminders[0].text).toBe(text);
 					done();
 				}).catch((err) => {
@@ -40,7 +46,7 @@ describe('POST /reminder', () => {
 	it('Should not create reminder with invalid body data', (done) => {
 		let text = ' ';
 		request(app)
-			.post('/reminder')
+			.post('/reminders')
 			.send('')
 			.expect(400)
 			.expect((res) => {
@@ -51,7 +57,7 @@ describe('POST /reminder', () => {
 					return done(err);
 				}
 				Reminder.find().then((reminders) => {
-					expect(reminders.length).toBe(0);
+					expect(reminders.length).toBe(_reminders.length);
 					done();
 				}).catch((err) => {
 					done(err);
