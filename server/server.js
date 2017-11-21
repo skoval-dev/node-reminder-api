@@ -31,7 +31,6 @@ app.get('/reminders', (req, res) => {
 		}
 		res.status(200).send({reminders, success: true});
 	}).catch((err) => {
-		console.log(err.message)
 		res.status(400).send({success: false, message: err.message});
 	});
 });
@@ -39,11 +38,11 @@ app.get('/reminders', (req, res) => {
 app.get('/reminders/:id', (req, res) => {
     let id = req.params && req.params.id;
     if(id && !ObjectID.isValid(id)) {
-        res.status(404).send({message: `The id: <${id}> is not valid!`, success: false})
+        return res.status(404).send({message: `The id: <${id}> is not valid!`, success: false})
     }
     Reminder.findById(id).then((reminder) => {
         if(!reminder){
-            res.status(404).send({message: `There are not found reminder by id <${id}>`, success: false});
+            return res.status(404).send({message: `There are not found reminder by id <${id}>`, success: false});
         }
         res.status(200).send({reminder, success: true});
     }).catch((err) => {

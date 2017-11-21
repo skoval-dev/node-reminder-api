@@ -1,13 +1,21 @@
-const request = require('supertest');
-const expect = require('expect');
+const      request = require('supertest');
+const       expect = require('expect');
 
-const {app} = require('./../server');
-const {Reminder} = require('./../models/reminder');
+const        {app} = require('./../server');
+const   {Reminder} = require('./../models/reminder');
+const   {ObjectID} = require('mongodb');
 
 const _reminders = [
-	{text: 'Reminder, R-1'},
-	{text: 'Reminder, R-2'},
-	{text: 'Reminder, R-3'},
+	{
+	    _id: new ObjectID(),
+	    text: 'Reminder, R-1'
+    }, {
+        _id: new ObjectID(),
+        text: 'Reminder, R-2'
+    }, {
+        _id: new ObjectID(),
+        text: 'Reminder, R-3'
+    },
 ];
 
 beforeEach((done) => {
@@ -44,7 +52,6 @@ describe('POST /reminders', () => {
 	});
 
 	it('Should not create reminder with invalid body data', (done) => {
-		let text = ' ';
 		request(app)
 			.post('/reminders')
 			.send('')
@@ -73,7 +80,7 @@ describe('GET /reminders', () => {
 			.get('/reminders')
 			.expect(200)
 			.expect((res) => {
-				expect(res.body.reminders.length).toBe(3)
+				expect(res.body.reminders.length).toBe(3);
 			}).end((err, res) => {
 				if(err){
 					return done(err);
@@ -81,4 +88,36 @@ describe('GET /reminders', () => {
 				done();
 			})
 	});
+});
+
+describe('GET /reminders/:id', () => {
+    it('Should return reminder by id', (done) => {
+        request(app)
+            .get(`/reminders/${_reminders[0]._id.toHexString()}`)
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.reminder.text).toBe(_reminders[0].text);
+            })
+            .end((err, res) => {
+                if(err){
+                    return done(err);
+                }
+                done();
+            })
+    });
+
+    it('Should return 404 for non-matched id', (done) => {
+        let hex_id = new ObjectID().toHexString();
+        request(app)
+            .get(`/reminders/${hex_id}`)
+            .expect(404)
+            .end(done);
+    });
+
+    it('Should return 404 for non-object ids', (done) => {
+        request(app)
+            .get('/reminders/1234')
+            .expect(404)
+            .end(done);
+    });
 });
