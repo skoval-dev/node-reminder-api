@@ -2,7 +2,7 @@ const       express = require('express');
 const   body_parser = require('body-parser');
 
 const          {db} = require('./db/mongoose');
-
+const    {ObjectID} = require('mongodb');
 const    {Reminder} = require('./models/reminder');
 const        {User} = require('./models/user');
 
@@ -36,10 +36,25 @@ app.get('/reminders', (req, res) => {
 	});
 });
 
+app.get('/reminders/:id', (req, res) => {
+    let id = req.params && req.params.id;
+    if(id && !ObjectID.isValid(id)) {
+        res.status(404).send({message: `The id: <${id}> is not valid!`, success: false})
+    }
+    Reminder.findById(id).then((reminder) => {
+        if(!reminder){
+            res.status(404).send({message: `There are not found reminder by id <${id}>`, success: false});
+        }
+        res.status(200).send({reminder, success: true});
+    }).catch((err) => {
+        res.status(400).send({message: err.message, success: false});
+    });
+});
+
 app.listen(port, () => {
    console.log(`Server is up, and listening on port: ${port}`);
 });
 
-module.exports = {app}
+module.exports = {app};
 
 
