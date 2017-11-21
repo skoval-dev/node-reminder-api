@@ -69,7 +69,7 @@ describe('POST /reminders', () => {
 				}).catch((err) => {
 					done(err);
 				});	
-			})
+			});
 	});
 
 });
@@ -86,7 +86,7 @@ describe('GET /reminders', () => {
 					return done(err);
 				}
 				done();
-			})
+			});
 	});
 });
 
@@ -103,7 +103,7 @@ describe('GET /reminders/:id', () => {
                     return done(err);
                 }
                 done();
-            })
+            });
     });
 
     it('Should return 404 for non-matched id', (done) => {
@@ -125,15 +125,23 @@ describe('GET /reminders/:id', () => {
 
 describe('DELETE /reminders/:id', () => {
     it('Should delete reminder by id', (done) => {
+        let hex_id = _reminders[0]._id.toHexString();
         request(app)
-            .del(`/reminders/${_reminders[0]._id.toHexString()}`)
+            .del(`/reminders/${hex_id}`)
             .expect(200)
+            .expect((res) => {
+                expect(res.body.reminder._id).toBe(hex_id);
+            })
             .end((err, res) => {
                 if(err){
                     return done(err);
                 }
-                done();
-            })
+            });
+
+        Reminder.findById(hex_id).then((res) => {
+           expect(res.body).toNotExist();
+           done();
+        }).catch((err) => done(err));
     });
 
     it('Should return 404 for non-deleted id', (done) => {
@@ -150,4 +158,5 @@ describe('DELETE /reminders/:id', () => {
             .expect(404)
             .end(done);
     });
+
 });
