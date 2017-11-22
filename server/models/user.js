@@ -33,8 +33,6 @@ const User_Schema = new Schema({
     }]
 });
 
-User_Schema.set('toObject', { virtuals: true });
-
 User_Schema.methods.generate_auth_token = function() {
     let user = this,
         access = 'auth',
@@ -48,6 +46,23 @@ User_Schema.methods.toJSON = function() {
     let user = this;
     let user_object = user.toObject();
     return _.pick(user_object, ['_id', 'email']);
+};
+
+User_Schema.statics.find_by_token = function(token) {
+    let user = this,
+        decoded;
+    try {
+        decoded = jwt.verify(token, 'abc123');
+    } catch(e) {
+        return Promise.reject('The provided token is incorrect!');
+    }
+
+    return user.findOne({
+        _id: decoded._id,
+        'tokens.token': token,
+        'tokens.access': 'auth'
+    });
+
 };
 
 const User = mongoose.model('User', User_Schema);

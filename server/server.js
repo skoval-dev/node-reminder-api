@@ -1,16 +1,16 @@
 require('./config/config');
 
-const _             = require('lodash');
-const       express = require('express');
-const   body_parser = require('body-parser');
+const _              = require('lodash');
+const       express  = require('express');
+const   body_parser  = require('body-parser');
 
-const          {db} = require('./db/mongoose');
-const    {ObjectID} = require('mongodb');
-const    {Reminder} = require('./models/reminder');
-const        {User} = require('./models/user');
-
-const           app = express();
-const          port = process.env.PORT;
+const          {db}  = require('./db/mongoose');
+const    {ObjectID}  = require('mongodb');
+const    {Reminder}  = require('./models/reminder');
+const        {User}  = require('./models/user');
+const {authenticate} = require('./middleware/authenticate');
+const           app  = express();
+const          port  = process.env.PORT;
 
 app.use(body_parser.json());
 
@@ -101,10 +101,14 @@ app.post('/users', (req, res) => {
     }).then((token) => {
         console.log('User was saved: ', user);
         console.log('Token generated: ', token);
-        res.header('x-auth', token).status(200).send(user.toJSON());
+        res.header('x-auth', token).status(200).send(user);
     }).catch((err) => {
         res.send({message: err.message, success: false});
     })
+});
+
+app.get('/users/me', authenticate, (req, res) => {
+    res.send(req.user);
 });
 
 app.listen(port, () => {
