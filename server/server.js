@@ -93,6 +93,20 @@ app.patch('/reminders/:id', (req, res) => {
     });
 });
 
+app.post('/users', (req, res) => {
+    let body = _.pick(req.body, ['email', 'password']);
+    let user = new User(body);
+    user.save().then(() => {
+        return user.generate_auth_token();
+    }).then((token) => {
+        console.log('User was saved: ', user);
+        console.log('Token generated: ', token);
+        res.header('x-auth', token).status(200).send(user.toJSON());
+    }).catch((err) => {
+        res.send({message: err.message, success: false});
+    })
+});
+
 app.listen(port, () => {
    console.log(`Server is up, and listening on port: ${port}`);
 });
