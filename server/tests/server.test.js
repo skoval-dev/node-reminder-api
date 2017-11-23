@@ -340,3 +340,30 @@ describe("POST /users/login", () => {
             });
     });
 });
+
+
+describe("DELETE /users/me/token", () => {
+    it("Should remove token on logout", (done) => {
+        let token_obj = _users[0].tokens[0];
+       request(app)
+           .delete("/users/me/token")
+           .set('x-auth', token_obj.token)
+           .expect(200)
+           .expect((res) => {
+                expect(res.body.message).toBe("The token was deleted");
+                expect(res.body.success).toBe(true);
+            }).end((err) => {
+                if(err){
+                    return done(err);
+                }
+
+                User.findOne({email: _users[0].email}).then((res) => {
+                       expect(res.tokens.length).toBe(0);
+                   done();
+                }).catch((err) => {
+                    done(err);
+                });
+
+            });
+    });
+});
