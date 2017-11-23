@@ -35,30 +35,30 @@ const User_Schema = new Schema({
 });
 
 User_Schema.methods.generate_auth_token = function() {
-    let user = this,
+    const User = this,
         access = 'auth',
-        token = jwt.sign({_id: user._id.toHexString(), access}, 'abc123').toString();
-    user.tokens.push({access, token});
+        token = jwt.sign({_id: User._id.toHexString(), access}, 'abc123').toString();
+    User.tokens.push({access, token});
 
-    return user.save().then(() => token);
+    return User.save().then(() => token);
 };
 
 User_Schema.methods.toJSON = function() {
-    let user = this;
-    let user_object = user.toObject();
+    const User = this;
+    let user_object = User.toObject();
     return _.pick(user_object, ['_id', 'email']);
 };
 
 User_Schema.statics.find_by_token = function(token) {
-    let user = this,
-        decoded;
+    const User = this;
+    let decoded;
     try {
         decoded = jwt.verify(token, 'abc123');
     } catch(e) {
         return Promise.reject('The provided token is incorrect!');
     }
 
-    return user.findOne({
+    return User.findOne({
         _id: decoded._id,
         'tokens.token': token,
         'tokens.access': 'auth'
@@ -66,12 +66,31 @@ User_Schema.statics.find_by_token = function(token) {
 
 };
 
+User_Schema.statics.find_by_credentials = function(email, password) {
+    const User = this;
+
+    return User.findOne({email}).then((user) => {
+        if(!user){
+            return Promise.reject("User doesn\'t exist !");
+        }
+        return new Promise((resolve, reject) => {
+            bcrypt.compare(password, user.password, (err, res) => {
+                if(res){
+                   resolve(user);
+                }else{
+                    reject((err && err.message) || "The password doesn\'t matches");
+                }
+            });
+        });
+    });
+};
+
 User_Schema.pre('save', function(next){
-    let user = this;
-    if(user.isModified('password')){
+    const User = this;
+    if(User.isModified('password')){
         bcrypt.genSalt(10, (err, salt) => {
-            bcrypt.hash(user.password, salt, (err, hash) => {
-                user.password = hash;
+            bcrypt.hash(User.password, salt, (err, hash) => {
+                User.password = hash;
                 next();
             });
         });

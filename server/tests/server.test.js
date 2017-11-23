@@ -270,7 +270,5 @@ describe("POST /users", () => {
                     expect(user).toNotExist();
                 })
             }).end(done())
-
-
     });
 });

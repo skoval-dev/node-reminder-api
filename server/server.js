@@ -11,6 +11,7 @@ const        {User}  = require('./models/user');
 const {authenticate} = require('./middleware/authenticate');
 const           app  = express();
 const          port  = process.env.PORT;
+const         bcrypt = require('bcryptjs');
 
 app.use(body_parser.json());
 
@@ -107,6 +108,20 @@ app.post('/users', (req, res) => {
 
 app.get('/users/me', authenticate, (req, res) => {
     res.send(req.user);
+});
+
+// POST /users/login {email, password}
+
+app.post('/users/login', (req, res) => {
+    let body = _.pick(req.body, ['email', 'password']);
+    User.find_by_credentials(body.email, body.password).then((user) => {
+        user.generate_auth_token().then((token) => {
+            res.header('x-auth', token).status(200).send(user);
+        });
+
+    }).catch((err) => {
+        res.status(400).send(err);
+    });
 });
 
 app.listen(port, () => {
