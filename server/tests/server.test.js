@@ -30,7 +30,7 @@ describe('POST /reminders', () => {
 					expect(reminders[0].text).toBe(text);
 					done();
 				}).catch((err) => {
-					done(err);
+					return done(err);
 				});	
 			}); 
 	});
@@ -51,7 +51,7 @@ describe('POST /reminders', () => {
 					expect(reminders.length).toBe(_reminders.length);
 					done();
 				}).catch((err) => {
-					done(err);
+					return done(err);
 				});	
 			});
 	});
@@ -184,10 +184,10 @@ describe("PATCH /reminders/:id", () => {
                 expect(res.body.reminder.completed).toBe(payload.completed);
                 expect(res.body.reminder.completed_at).toBe(-1);
             }).end((err, res) => {
-            if(err){
-                return done(err);
-            }
-            done();
+                if(err){
+                    return done(err);
+                }
+                done(err);
         })
     });
 });
@@ -227,7 +227,7 @@ describe("POST /users", () => {
             .expect((res) => {
                 expect(res.headers['x-auth']).toExist();
                 expect(res.body.email).toBe(email);
-            }).end((err) => {
+            }).end((err, res) => {
                 if(err){
                     return done(err);
                 }
@@ -245,8 +245,8 @@ describe("POST /users", () => {
         request(app)
             .post('/users')
             .send({
-                email: 'test.skoval',
-                password: '1234'
+                email: 'skoval',
+                password: '12344563453'
             })
             .expect(400)
             .expect((res) => {
@@ -264,11 +264,79 @@ describe("POST /users", () => {
             })
             .expect(400)
             .expect((res) => {
-                expect(res.body.status).toBe(false);
-                expect(res.body.message).toInclue("duplicate key error collection");
+                expect(res.body.success).toBe(false);
+                expect(res.body.message).toInclude("duplicate key error collection");
+            }).end((err, res) => {
+                if(err){
+                    return done(err);
+                }
                 User.findOne({email: _users[0].email}).then((user) => {
-                    expect(user).toNotExist();
+                    expect(user.email).toBe(_users[0].email);
+                    done();
+                }).catch((err) => {
+                    return done(err);
                 })
-            }).end(done())
+            });
+    });
+});
+
+
+describe("POST /users/login", () => {
+    it("Should login user and return auth token", (done) => {
+        const payload = {
+            email: _users[1].email,
+            password: _users[1].password
+        };
+
+        request(app)
+            .post("/users/login")
+            .send(payload)
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.email).toBe(payload.email);
+                expect(res.body.password).toNotBe(payload.password);
+                expect(res.headers['x-auth']).toExist();
+            })
+            .end((err, res) => {
+                if(err){
+                    return done(err);
+                }
+                User.findOne({email: payload.email}).then((user) => {
+                    expect(user.tokens[0]).toInclude({
+                        access: 'auth',
+                        token: res.headers['x-auth']
+                    });
+                    done(err);
+                }).catch((err) => {
+                    return done(err);
+                });
+
+            });
+    });
+
+    it("Should denied invalid credentials", (done) => {
+        const payload = {
+            email: _users[1].email,
+            password: _users[1].password
+        };
+
+        request(app)
+            .post("/users/login")
+            .send(payload)
+            .expect(400)
+            .expect((res) => {
+                expect(res.body.success).toBe(false);
+                expect(res.headers['x-auth']).toNotExist();
+            })
+            .end((err, res) => {
+                if(err){
+                    return done(err)
+                }
+
+                User.findOne({email: payload.email}).then((user) => {
+                    expect(user.tokens.length).toBe(0);
+                    done();
+                }).catch((err) => done(err));
+            });
     });
 });

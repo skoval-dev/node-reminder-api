@@ -71,14 +71,14 @@ User_Schema.statics.find_by_credentials = function(email, password) {
 
     return User.findOne({email}).then((user) => {
         if(!user){
-            return Promise.reject("User doesn\'t exist !");
+            return Promise.reject({message: "User doesn\'t exist !", success: false});
         }
         return new Promise((resolve, reject) => {
             bcrypt.compare(password, user.password, (err, res) => {
                 if(res){
                    resolve(user);
                 }else{
-                    reject((err && err.message) || "The password doesn\'t matches");
+                    reject({message:(err && err.message) || "The password doesn\'t matches", success: false});
                 }
             });
         });
