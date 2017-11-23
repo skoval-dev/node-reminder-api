@@ -4,33 +4,10 @@ const       expect = require('expect');
 const        {app} = require('./../server');
 const   {Reminder} = require('./../models/reminder');
 const   {ObjectID} = require('mongodb');
+const   {_reminders, populate_reminders, _users, populate_users} = require('./seed/seed');
 
-const _reminders = [
-	{
-	    _id: new ObjectID(),
-	    text: 'Reminder, R-1',
-        completed: true,
-        completed_at: 1511300279632
-    }, {
-        _id: new ObjectID(),
-        text: 'Reminder, R-2',
-        completed: true,
-        completed_at: 1511300279632
-    }, {
-        _id: new ObjectID(),
-        text: 'Reminder, R-3',
-        completed: true,
-        completed_at: 1511300279632
-    },
-];
-
-beforeEach((done) => {
-	Reminder.remove({}).then(() => {
-		return Reminder.insertMany(_reminders);
-	}).then(() => done()).catch((err) => {
-		done(err);
-	});
-});
+beforeEach(populate_reminders);
+beforeEach(populate_users);
 
 describe('POST /reminders', () => {
 	it('Should create a new reminder', (done) => {
