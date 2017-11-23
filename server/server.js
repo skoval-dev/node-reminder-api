@@ -99,11 +99,9 @@ app.post('/users', (req, res) => {
     user.save().then(() => {
         return user.generate_auth_token();
     }).then((token) => {
-        console.log('User was saved: ', user);
-        console.log('Token generated: ', token);
         res.header('x-auth', token).status(200).send(user);
     }).catch((err) => {
-        res.send({message: err.message, success: false});
+        res.status(400).send({message: err.message, success: false});
     })
 });
 

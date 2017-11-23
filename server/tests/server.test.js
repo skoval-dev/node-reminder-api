@@ -3,6 +3,7 @@ const       expect = require('expect');
 
 const        {app} = require('./../server');
 const   {Reminder} = require('./../models/reminder');
+const   {User} = require('./../models/user');
 const   {ObjectID} = require('mongodb');
 const   {_reminders, populate_reminders, _users, populate_users} = require('./seed/seed');
 
@@ -188,5 +189,88 @@ describe("PATCH /reminders/:id", () => {
             }
             done();
         })
+    });
+});
+
+describe("GET /users/me", () => {
+    it("Should return user if authenticated", (done) => {
+        request(app)
+            .get('/users/me')
+            .set('x-auth', _users[0].tokens[0].token)
+            .expect(200)
+            .expect((res) => {
+                expect(res.body._id).toBe(_users[0]._id.toHexString());
+                expect(res.body.email).toBe(_users[0].email);
+            }).end(done);
+    });
+
+    it("Should return 401 if not authenticated", (done) => {
+        request(app)
+            .get('/users/me')
+            .expect(401)
+            .expect((res) => {
+                expect(res.body.success).toBe(false);
+                expect(res.body.message).toBe("The provided token is incorrect!");
+            }).end(done);
+    });
+});
+
+describe("POST /users", () => {
+    it("Should create a user", (done) => {
+        let email = "example@example.com",
+            password = "123asd";
+
+        request(app)
+            .post('/users')
+            .send({email, password})
+            .expect(200)
+            .expect((res) => {
+                expect(res.headers['x-auth']).toExist();
+                expect(res.body.email).toBe(email);
+            }).end((err) => {
+                if(err){
+                    return done(err);
+                }
+
+                User.findOne({email}).then((user) => {
+                    expect(user).toExist();
+                    expect(user.pass).toNotBe(password);
+                    expect(user.email).toBe(email);
+                    done();
+                });
+        });
+    });
+
+    it("Should return validation errors if request invalid", (done) => {
+        request(app)
+            .post('/users')
+            .send({
+                email: 'test.skoval',
+                password: '1234'
+            })
+            .expect(400)
+            .expect((res) => {
+                expect(res.body.success).toBe(false);
+                expect(res.body.message).toInclude("User validation failed");
+            }).end(done);
+    });
+
+    it("Should not create user if email exist", (done) => {
+        request(app)
+            .post('/users')
+            .send({
+                email: _users[0].email,
+                password: _users[0].password
+            })
+            .expect(400)
+            .expect((res) => {
+                expect(res.body.status).toBe(false);
+                expect(res.body.message).toInclue("duplicate key error collection");
+                User.findOne({email: _users[0].email}).then((user) => {
+                    expect(user).toNotExist();
+                })
+            }).end(done())
+
+
     });
 });
