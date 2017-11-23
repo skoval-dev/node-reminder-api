@@ -122,6 +122,14 @@ app.post('/users/login', (req, res) => {
     });
 });
 
+app.delete("/users/me/token", authenticate, (req, res) => {
+    req.user.remove_token(req.token).then(() => {
+        res.status(200).send({message: "The token was deleted", success: true})
+    }).catch((err) => {
+        res.status(400).send({message: err.message, success: false});
+    });
+});
+
 app.listen(port, () => {
    console.log(`Server is up, and listening on port: ${port}`);
 });

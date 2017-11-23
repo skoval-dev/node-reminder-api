@@ -317,7 +317,7 @@ describe("POST /users/login", () => {
     it("Should denied invalid credentials", (done) => {
         const payload = {
             email: _users[1].email,
-            password: _users[1].password
+            password: _users[1].password + '_wrong'
         };
 
         request(app)
