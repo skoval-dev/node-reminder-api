@@ -146,7 +146,7 @@ describe('DELETE /reminders/:id', () => {
             });
 
         Reminder.findById(hex_id).then((res) => {
-           expect(res.body).toNotExist();
+           expect(res.body).toBeFalsy();
            done();
         }).catch((err) => done(err));
     });
@@ -164,7 +164,7 @@ describe('DELETE /reminders/:id', () => {
             });
 
         Reminder.findById(hex_id).then((res) => {
-            expect(res).toExist();
+            expect(res).toBeTruthy();
             done();
         }).catch((err) => done(err));
     });
@@ -300,7 +300,7 @@ describe("POST /users", () => {
             .send({email, password})
             .expect(200)
             .expect((res) => {
-                expect(res.headers['x-auth']).toExist();
+                expect(res.headers['x-auth']).toBeTruthy();
                 expect(res.body.email).toBe(email);
             }).end((err, res) => {
                 if(err){
@@ -308,8 +308,8 @@ describe("POST /users", () => {
                 }
 
                 User.findOne({email}).then((user) => {
-                    expect(user).toExist();
-                    expect(user.pass).toNotBe(password);
+                    expect(user).toBeTruthy();
+                    expect(user.password).not.toBe(password);
                     expect(user.email).toBe(email);
                     done();
                 });
@@ -326,7 +326,7 @@ describe("POST /users", () => {
             .expect(400)
             .expect((res) => {
                 expect(res.body.success).toBe(false);
-                expect(res.body.message).toInclude("User validation failed");
+                expect(res.body.message).toContain("User validation failed");
             }).end(done);
     });
 
@@ -340,7 +340,7 @@ describe("POST /users", () => {
             .expect(400)
             .expect((res) => {
                 expect(res.body.success).toBe(false);
-                expect(res.body.message).toInclude("duplicate key error collection");
+                expect(res.body.message).toContain("duplicate key error collection");
             }).end((err, res) => {
                 if(err){
                     return done(err);
@@ -369,15 +369,15 @@ describe("POST /users/login", () => {
             .expect(200)
             .expect((res) => {
                 expect(res.body.email).toBe(payload.email);
-                expect(res.body.password).toNotBe(payload.password);
-                expect(res.headers['x-auth']).toExist();
+                expect(res.body.password).toBeUndefined();
+                expect(res.headers['x-auth']).toBeTruthy();
             })
             .end((err, res) => {
                 if(err){
                     return done(err);
                 }
                 User.findOne({email: payload.email}).then((user) => {
-                    expect(user.tokens[1]).toInclude({
+                    expect(user.toObject().tokens[1]).toMatchObject({
                         access: 'auth',
                         token: res.headers['x-auth']
                     });
@@ -401,7 +401,7 @@ describe("POST /users/login", () => {
             .expect(400)
             .expect((res) => {
                 expect(res.body.success).toBe(false);
-                expect(res.headers['x-auth']).toNotExist();
+                expect(res.headers['x-auth']).toBeFalsy();
             })
             .end((err, res) => {
                 if(err){
