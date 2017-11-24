@@ -1,11 +1,11 @@
 const env = process.env.NODE_ENV || 'development';
 
-console.log('env *****', env);
-
-if(env === 'development'){
-    process.env.PORT = 3000;
-    process.env.MONGODB_URI = 'mongodb://localhost:27017/Reminder'
-}else if(env === 'test'){
-    process.env.PORT = 3001;
-    process.env.MONGODB_URI = 'mongodb://localhost:27017/Reminder_QA'
+if( env === 'development' || env === 'test' ){
+    let config = require('./config.json');
+    const env_config = config[env];
+    Object.keys(env_config).forEach((key) => {
+        process.env[key] = env_config[key];
+    });
 }
+
+console.log('env *****', env);

@@ -7,16 +7,6 @@ MongoClient.connect('mongodb://localhost:27017/Todo_app', (err, db) => {
     console.log('Connected to MongoDB server');
 
     /*Insert data to a collection*/
-    // db.collection('Todos').insertOne({
-    //     title: "First to do",
-    //     completed: false
-    // }, (err, result) => {
-    //     if(err){
-    //         return console.log('Unable to insert todo', err);
-    //     }
-    //         console.log(JSON.stringify(result.ops, undefined, 2));
-    //     });
-    /*Insert data to a collection*/
     db.collection('Users').insertOne({
         name: 'John',
         age: 22,
