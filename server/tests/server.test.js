@@ -16,6 +16,7 @@ describe('POST /reminders', () => {
 
 		request(app)
 			.post('/reminders')
+            .set('x-auth', _users[0].tokens[0].token)
 			.send({text})
 			.expect(200)
 			.expect((res) => {
@@ -38,6 +39,7 @@ describe('POST /reminders', () => {
 	it('Should not create reminder with invalid body data', (done) => {
 		request(app)
 			.post('/reminders')
+            .set('x-auth', _users[0].tokens[0].token)
 			.send('')
 			.expect(400)
 			.expect((res) => {
@@ -62,9 +64,10 @@ describe('GET /reminders', () => {
 	it('Should get all reminders', (done) => {
 		request(app)
 			.get('/reminders')
+            .set('x-auth', _users[1].tokens[0].token)
 			.expect(200)
 			.expect((res) => {
-				expect(res.body.reminders.length).toBe(3);
+				expect(res.body.reminders.length).toBe(2);
 			}).end((err, res) => {
 				if(err){
 					return done(err);
@@ -78,9 +81,26 @@ describe('GET /reminders/:id', () => {
     it('Should return reminder by id', (done) => {
         request(app)
             .get(`/reminders/${_reminders[0]._id.toHexString()}`)
+            .set('x-auth', _users[0].tokens[0].token)
             .expect(200)
             .expect((res) => {
                 expect(res.body.reminder.text).toBe(_reminders[0].text);
+            })
+            .end((err, res) => {
+                if(err){
+                    return done(err);
+                }
+                done();
+            });
+    });
+
+    it('Should not return reminder, created by other user', (done) => {
+        request(app)
+            .get(`/reminders/${_reminders[0]._id.toHexString()}`)
+            .set('x-auth', _users[1].tokens[0].token)
+            .expect(404)
+            .expect((res) => {
+                expect(res.body.success).toBe(false);
             })
             .end((err, res) => {
                 if(err){
@@ -94,6 +114,7 @@ describe('GET /reminders/:id', () => {
         let hex_id = new ObjectID().toHexString();
         request(app)
             .get(`/reminders/${hex_id}`)
+            .set('x-auth', _users[0].tokens[0].token)
             .expect(404)
             .end(done);
     });
@@ -101,6 +122,7 @@ describe('GET /reminders/:id', () => {
     it('Should return 404 for non-object ids', (done) => {
         request(app)
             .get('/reminders/1234')
+            .set('x-auth', _users[0].tokens[0].token)
             .expect(404)
             .end(done);
     });
@@ -109,9 +131,10 @@ describe('GET /reminders/:id', () => {
 
 describe('DELETE /reminders/:id', () => {
     it('Should delete reminder by id', (done) => {
-        let hex_id = _reminders[0]._id.toHexString();
+        let hex_id = _reminders[1]._id.toHexString();
         request(app)
             .del(`/reminders/${hex_id}`)
+            .set('x-auth', _users[1].tokens[0].token)
             .expect(200)
             .expect((res) => {
                 expect(res.body.reminder._id).toBe(hex_id);
@@ -128,10 +151,29 @@ describe('DELETE /reminders/:id', () => {
         }).catch((err) => done(err));
     });
 
+    it('Should not delete reminder, created by other user', (done) => {
+        let hex_id = _reminders[0]._id.toHexString();
+        request(app)
+            .del(`/reminders/${hex_id}`)
+            .set('x-auth', _users[1].tokens[0].token)
+            .expect(404)
+            .end((err, res) => {
+                if(err){
+                    return done(err);
+                }
+            });
+
+        Reminder.findById(hex_id).then((res) => {
+            expect(res).toExist();
+            done();
+        }).catch((err) => done(err));
+    });
+
     it('Should return 404 for non-deleted id', (done) => {
         let hex_id = new ObjectID().toHexString();
         request(app)
             .del(`/reminders/${hex_id}`)
+            .set('x-auth', _users[0].tokens[0].token)
             .expect(404)
             .end(done);
     });
@@ -139,6 +181,7 @@ describe('DELETE /reminders/:id', () => {
     it('Should return 404 for non-object ids', (done) => {
         request(app)
             .del('/reminders/1234')
+            .set('x-auth', _users[0].tokens[0].token)
             .expect(404)
             .end(done);
     });
@@ -155,6 +198,7 @@ describe("PATCH /reminders/:id", () => {
         };
         request(app)
             .patch(`/reminders/${id}`)
+            .set('x-auth', _users[0].tokens[0].token)
             .send(payload)
             .expect(200)
             .expect((res) => {
@@ -169,6 +213,27 @@ describe("PATCH /reminders/:id", () => {
             })
    });
 
+    it("Should not update the reminder, created by other user", (done) => {
+        let id = _reminders[1]._id.toHexString();
+        let payload = {
+            text: 'New test text',
+            completed: true
+        };
+        request(app)
+            .patch(`/reminders/${id}`)
+            .set('x-auth', _users[0].tokens[0].token)
+            .send(payload)
+            .expect(404)
+            .expect((res) => {
+                expect(res.body.success).toBe(false);
+            }).end((err, res) => {
+            if(err){
+                return done(err);
+            }
+            done();
+        })
+    });
+
     it("Should clear completed_at when reminder is not completed", (done) => {
         let id = _reminders[0]._id.toHexString();
         let payload = {
@@ -177,6 +242,7 @@ describe("PATCH /reminders/:id", () => {
         };
         request(app)
             .patch(`/reminders/${id}`)
+            .set('x-auth', _users[0].tokens[0].token)
             .send(payload)
             .expect(200)
             .expect((res) => {
@@ -201,7 +267,12 @@ describe("GET /users/me", () => {
             .expect((res) => {
                 expect(res.body._id).toBe(_users[0]._id.toHexString());
                 expect(res.body.email).toBe(_users[0].email);
-            }).end(done);
+            }).end((err) => {
+                if(err){
+                    return done(err);
+                }
+                done();
+        });
     });
 
     it("Should return 401 if not authenticated", (done) => {
@@ -210,8 +281,12 @@ describe("GET /users/me", () => {
             .expect(401)
             .expect((res) => {
                 expect(res.body.success).toBe(false);
-                expect(res.body.message).toBe("The provided token is incorrect!");
-            }).end(done);
+            }).end((err) => {
+                if(err){
+                    return done(err);
+                }
+                done();
+        });
     });
 });
 
@@ -302,7 +377,7 @@ describe("POST /users/login", () => {
                     return done(err);
                 }
                 User.findOne({email: payload.email}).then((user) => {
-                    expect(user.tokens[0]).toInclude({
+                    expect(user.tokens[1]).toInclude({
                         access: 'auth',
                         token: res.headers['x-auth']
                     });
@@ -334,7 +409,7 @@ describe("POST /users/login", () => {
                 }
 
                 User.findOne({email: payload.email}).then((user) => {
-                    expect(user.tokens.length).toBe(0);
+                    expect(user.tokens.length).toBe(1);
                     done();
                 }).catch((err) => done(err));
             });

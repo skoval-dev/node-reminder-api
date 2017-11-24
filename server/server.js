@@ -15,9 +15,10 @@ const         bcrypt = require('bcryptjs');
 
 app.use(body_parser.json());
 
-app.post('/reminders', (req, res) => {
+app.post('/reminders', authenticate, (req, res) => {
     const reminder = new Reminder({
-        text: req.body.text
+        text: req.body.text,
+        _creator: req.user._id
     });
 
     reminder.save().then((doc) => {
@@ -28,8 +29,8 @@ app.post('/reminders', (req, res) => {
 
 });
 
-app.get('/reminders', (req, res) => {
-	Reminder.find().then((reminders) => {
+app.get('/reminders',authenticate, (req, res) => {
+	Reminder.find({_creator:req.user._id}).then((reminders) => {
 		if(reminders.length === 0){
 			throw new Error('There are not available reminders')
 		}
@@ -39,12 +40,12 @@ app.get('/reminders', (req, res) => {
 	});
 });
 
-app.get('/reminders/:id', (req, res) => {
+app.get('/reminders/:id', authenticate, (req, res) => {
     let id = req.params && req.params.id;
     if(id && !ObjectID.isValid(id)) {
         return res.status(404).send({message: `The id: <${id}> is not valid!`, success: false})
     }
-    Reminder.findById(id).then((reminder) => {
+    Reminder.findOne({_id: id, _creator: req.user._id}).then((reminder) => {
         if(!reminder){
             return res.status(404).send({message: `There are not found reminder by id <${id}>`, success: false});
         }
@@ -54,12 +55,12 @@ app.get('/reminders/:id', (req, res) => {
     });
 });
 
-app.delete('/reminders/:id', (req, res) => {
+app.delete('/reminders/:id', authenticate, (req, res) => {
     let id = req.params && req.params.id;
     if(id && !ObjectID.isValid(id)) {
         return res.status(404).send({message: `The id: <${id}> is not valid!`, success: false})
     }
-    Reminder.findByIdAndRemove(id).then((reminder) => {
+    Reminder.findOneAndRemove({_id: id, _creator: req.user._id}).then((reminder) => {
         if(!reminder){
             return res.status(404).send({message: `There are not found reminder by id <${id}>`, success: false});
         }
@@ -69,7 +70,7 @@ app.delete('/reminders/:id', (req, res) => {
     });
 });
 
-app.patch('/reminders/:id', (req, res) => {
+app.patch('/reminders/:id', authenticate, (req, res) => {
     let id = req.params && req.params.id;
     if(id && !ObjectID.isValid(id)) {
         return res.status(404).send({message: `The id: <${id}> is not valid!`, success: false})
@@ -84,7 +85,7 @@ app.patch('/reminders/:id', (req, res) => {
         body.completed_at = -1;
     }
 
-    Reminder.findByIdAndUpdate(id, {$set: body}, {new: true}).then((reminder) => {
+    Reminder.findOneAndUpdate({_id: id, _creator: req.user._id}, {$set: body}, {new: true}).then((reminder) => {
         if(!reminder){
             return res.status(404).send({message: `There are not found reminder by id <${id}>`, success: false});
         }

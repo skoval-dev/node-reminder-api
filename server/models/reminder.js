@@ -23,6 +23,10 @@ const reminderSchema = new Schema({
     created_at: {
         type: Number,
         default: new Date().getTime()
+    },
+    _creator: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true
     }
 });
 

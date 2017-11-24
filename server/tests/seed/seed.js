@@ -3,27 +3,8 @@ const   {Reminder} = require('./../../models/reminder');
 const   {ObjectID} = require('mongodb');
 const   jwt = require('jsonwebtoken');
 
-
-const   _reminders = [
-    {
-        _id: new ObjectID(),
-        text: 'Reminder, R-1',
-        completed: true,
-        completed_at: 1511300279632
-    }, {
-        _id: new ObjectID(),
-        text: 'Reminder, R-2',
-        completed: true,
-        completed_at: 1511300279632
-    }, {
-        _id: new ObjectID(),
-        text: 'Reminder, R-3',
-        completed: true,
-        completed_at: 1511300279632
-    },
-];
-
 const user_ids = [new ObjectID, new ObjectID];
+
 const _users = [
     {
         _id: user_ids[0],
@@ -37,9 +18,37 @@ const _users = [
     {
         _id: user_ids[1],
         email: 'huge_email@gmail.com',
-        password: "save_me_jesus"
+        password: "save_me_jesus",
+        tokens: [{
+            access: 'auth',
+            token: jwt.sign({_id: user_ids[1].toHexString(), access: 'auth'}, 'abc123').toString()
+        }]
+
     }
 ];
+
+const   _reminders = [
+    {
+        _id: new ObjectID(),
+        text: 'Reminder, R-1',
+        completed: true,
+        completed_at: 1511300279632,
+        _creator: _users[0]._id
+    }, {
+        _id: new ObjectID(),
+        text: 'Reminder, R-2',
+        completed: true,
+        completed_at: 1511300279632,
+        _creator: _users[1]._id
+    }, {
+        _id: new ObjectID(),
+        text: 'Reminder, R-3',
+        completed: true,
+        completed_at: 1511300279632,
+        _creator: _users[1]._id
+    },
+];
+
 
 const populate_reminders = (done) => {
     Reminder.remove({}).then(() => {
