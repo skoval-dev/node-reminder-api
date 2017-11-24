@@ -27,16 +27,16 @@ How to use:
 Result:
 
     {
-	    "development": {
-			"PORT": 3000,
-			"MONGODB_URI": mongodb://localhost:12344/Reminder,
-			"JWT_SECRET": "the_best_secret"
-		},
-		"test": {
-			"PORT": 3001,
-			"MONGODB_URI": mongodb://localhost:12344/Reminder_QA,
-			"JWT_SECRET": "the_best_secret"
-		}
+        "development": {
+            "PORT": 3000,
+            "MONGODB_URI": mongodb://localhost:12344/Reminder,
+            "JWT_SECRET": "the_best_secret"
+        },
+        "test": {
+            "PORT": 3001,
+            "MONGODB_URI": mongodb://localhost:12344/Reminder_QA,
+            "JWT_SECRET": "the_best_secret"
+        }
 	}
 
 
