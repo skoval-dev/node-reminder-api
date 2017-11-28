@@ -123,12 +123,15 @@ app.post('/users/login', (req, res) => {
     });
 });
 
-app.delete("/users/me/token", authenticate, (req, res) => {
-    req.user.remove_token(req.token).then(() => {
-        res.status(200).send({message: "The token was deleted", success: true})
-    }).catch((err) => {
-        res.status(400).send({message: err.message, success: false});
-    });
+app.delete("/users/me/token", authenticate, async (req, res) => {
+
+    try{
+        await req.user.remove_token(req.token);
+        res.status(200).send({message: "The token was deleted", success: true});
+    } catch (e) {
+        res.status(400).send({message: e.message, success: false});
+    }
+
 });
 
 app.listen(port, () => {
