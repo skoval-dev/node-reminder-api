@@ -15,123 +15,124 @@ const         bcrypt = require('bcryptjs');
 
 app.use(body_parser.json());
 
-app.post('/reminders', authenticate, (req, res) => {
+app.post('/reminders', authenticate, async (req, res) => {
     const reminder = new Reminder({
         text: req.body.text,
         _creator: req.user._id
     });
-
-    reminder.save().then((doc) => {
-       res.status(200).send(doc);
-    }).catch((err) => {
-        res.status(400).send(err);
-    });
+    try{
+        const result = await reminder.save();
+        res.status(200).send(result);
+    } catch (e) {
+        res.status(400).send(e);
+    }
 
 });
 
-app.get('/reminders',authenticate, (req, res) => {
-	Reminder.find({_creator:req.user._id}).then((reminders) => {
-		if(reminders.length === 0){
-			throw new Error('There are not available reminders')
-		}
-		res.status(200).send({reminders, success: true});
-	}).catch((err) => {
-		res.status(400).send({success: false, message: err.message});
-	});
+app.get('/reminders',authenticate, async (req, res) => {
+    try {
+        const reminders = await Reminder.find({_creator:req.user._id});
+        if(reminders.length === 0){
+            throw new Error('There are not available reminders');
+        }
+        res.status(200).send({reminders, success: true});
+
+    } catch (e) {
+        res.status(400).send({success: false, message: e.message});
+    }
 });
 
-app.get('/reminders/:id', authenticate, (req, res) => {
+app.get('/reminders/:id', authenticate, async (req, res) => {
     let id = req.params && req.params.id;
     if(id && !ObjectID.isValid(id)) {
-        return res.status(404).send({message: `The id: <${id}> is not valid!`, success: false})
+        return res.status(404).send({message: `The id: <${id}> is not valid!`, success: false});
     }
-    Reminder.findOne({_id: id, _creator: req.user._id}).then((reminder) => {
+    try {
+        const reminder = await Reminder.findOne({_id: id, _creator: req.user._id});
         if(!reminder){
             return res.status(404).send({message: `There are not found reminder by id <${id}>`, success: false});
         }
         res.status(200).send({reminder, success: true});
-    }).catch((err) => {
-        res.status(400).send({message: err.message, success: false});
-    });
+    } catch (e) {
+        res.status(400).send({message: e.message, success: false});
+    }
 });
 
-app.delete('/reminders/:id', authenticate, (req, res) => {
+app.delete('/reminders/:id', authenticate, async (req, res) => {
     let id = req.params && req.params.id;
     if(id && !ObjectID.isValid(id)) {
-        return res.status(404).send({message: `The id: <${id}> is not valid!`, success: false})
+        return res.status(404).send({message: `The id: <${id}> is not valid!`, success: false});
     }
-    Reminder.findOneAndRemove({_id: id, _creator: req.user._id}).then((reminder) => {
+    try{
+        const reminder = await Reminder.findOneAndRemove({_id: id, _creator: req.user._id});
         if(!reminder){
             return res.status(404).send({message: `There are not found reminder by id <${id}>`, success: false});
         }
         res.status(200).send({reminder, success: true});
-    }).catch((err) => {
-        res.status(400).send({message: err.message, success: false});
-    });
+    } catch (e) {
+        res.status(400).send({message: e.message, success: false});
+    }
 });
 
-app.patch('/reminders/:id', authenticate, (req, res) => {
-    let id = req.params && req.params.id;
+app.patch('/reminders/:id', authenticate, async (req, res) => {
+    const id = req.params && req.params.id;
     if(id && !ObjectID.isValid(id)) {
-        return res.status(404).send({message: `The id: <${id}> is not valid!`, success: false})
+        return res.status(404).send({message: `The id: <${id}> is not valid!`, success: false});
     }
     //Filter props from body based on provided in arr
-    let body = _.pick(req.body, ['text', 'completed']);
+    const body = _.pick(req.body, ['text', 'completed']);
 
     if(_.isBoolean(body.completed) && body.completed){
-        body.completed_at = new Date().getTime()
+        body.completed_at = new Date().getTime();
     }else{
         body.completed = false;
         body.completed_at = -1;
     }
-
-    Reminder.findOneAndUpdate({_id: id, _creator: req.user._id}, {$set: body}, {new: true}).then((reminder) => {
+    try{
+        const reminder = await Reminder.findOneAndUpdate({_id: id, _creator: req.user._id}, {$set: body}, {new: true});
         if(!reminder){
             return res.status(404).send({message: `There are not found reminder by id <${id}>`, success: false});
         }
         res.status(200).send({reminder, success: true});
-    }).catch((err) => {
-        res.status(400).send({message: err.message, success: false});
-    });
+    } catch (e) {
+        res.status(400).send({message: e.message, success: false});
+    }
 });
 
-app.post('/users', (req, res) => {
-    let body = _.pick(req.body, ['email', 'password']);
-    let user = new User(body);
-    user.save().then(() => {
-        return user.generate_auth_token();
-    }).then((token) => {
+app.post('/users', async (req, res) => {
+    try{
+        const body = _.pick(req.body, ['email', 'password']);
+        const user = new User(body);
+        await user.save();
+        const token = await user.generate_auth_token();
         res.header('x-auth', token).status(200).send(user);
-    }).catch((err) => {
-        res.status(400).send({message: err.message, success: false});
-    })
+    } catch (e) {
+        res.status(400).send({message: e.message, success: false});
+    }
 });
 
 app.get('/users/me', authenticate, (req, res) => {
     res.send(req.user);
 });
 
-app.post('/users/login', (req, res) => {
-    let body = _.pick(req.body, ['email', 'password']);
-    User.find_by_credentials(body.email, body.password).then((user) => {
-        user.generate_auth_token().then((token) => {
-            res.header('x-auth', token).status(200).send(user);
-        });
-
-    }).catch((err) => {
-        res.status(400).send(err);
-    });
+app.post('/users/login', async (req, res) => {
+    try{
+        const body = _.pick(req.body, ['email', 'password']);
+        const user = await User.find_by_credentials(body.email, body.password);
+        const token = await user.generate_auth_token();
+        res.header('x-auth', token).status(200).send(user);
+    } catch (e) {
+        res.status(400).send(e);
+    }
 });
 
 app.delete("/users/me/token", authenticate, async (req, res) => {
-
     try{
         await req.user.remove_token(req.token);
         res.status(200).send({message: "The token was deleted", success: true});
     } catch (e) {
         res.status(400).send({message: e.message, success: false});
     }
-
 });
 
 app.listen(port, () => {
@@ -139,5 +140,3 @@ app.listen(port, () => {
 });
 
 module.exports = {app};
-
-
